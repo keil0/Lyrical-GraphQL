@@ -1,35 +1,41 @@
-import React from "react";
+import React, { Component } from "react";
 import { graphql } from "react-apollo";
 import { Link } from "react-router";
+import gql from "graphql-tag";
 
-import fetchSongs from "../queries/fetchSongs";
+import query from "../queries/fetchSongs";
 
-const SongsList = ({ data, mutate }) => {
-  if (data.loading) return <div>Loading</div>;
+class SongsList extends Component {
+  onSongDelete(id) {
+    this.props.mutate({ variables: { id } }).then(() => {
+      this.props.data.refetch();
+    });
+  }
 
-  const onSongDelete = (id) => {
-    mutate({ variables: { id } });
-  };
-
-  const renderSongs = () =>
-    data.songs.map(({ id, title }) => (
+  renderSongs() {
+    return this.props.data.songs.map(({ id, title }) => (
       <li key={id} className="collection-item">
-        {title}
-        <i className="material-icons" onClick={() => onSongDelete(id)}>
+        <Link to={`/songs/${id}`}>{title}</Link>
+        <i className="material-icons" onClick={() => this.onSongDelete(id)}>
           delete
         </i>
       </li>
     ));
+  }
 
-  return (
-    <div>
-      <ul className="collection">{renderSongs()}</ul>
-      <Link to="/songs/new" className="btn-floating btn-large red right">
-        <i className="material-icons">add</i>
-      </Link>
-    </div>
-  );
-};
+  render() {
+    if (this.props.data.loading) return <div>Loading</div>;
+
+    return (
+      <div>
+        <ul className="collection">{this.renderSongs()}</ul>
+        <Link to="/songs/new" className="btn-floating btn-large red right">
+          <i className="material-icons">add</i>
+        </Link>
+      </div>
+    );
+  }
+}
 
 const mutation = gql`
   mutation DeleteSong($id: ID) {
@@ -39,4 +45,4 @@ const mutation = gql`
   }
 `;
 
-export default graphql(mutation)(graphql(fetchSongs)(SongsList));
+export default graphql(mutation)(graphql(query)(SongsList));
